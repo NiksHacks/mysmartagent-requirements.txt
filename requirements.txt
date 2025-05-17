@@ -1,0 +1,4 @@
+openai==1.*
+fastapi
+uvicorn[standard]
+python-dotenv
