@@ -1,4 +1,3 @@
-
 import os, json, openai
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -40,24 +39,25 @@ def run_agent(user_input):
     if user_input is not None:
         messages.append({"role": "user", "content": user_input})
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4o-audio-preview",   # or gpt-4o (depends on availability)
-        messages=messages,
-        functions=FUNCTIONS,
-        function_call="auto"
-    )
+    response = openai.chat.completions.create(
+     response = openai.chat.completions.create(
+    model="gpt-4o-audio-preview",    
+    messages=messages,
+    functions=FUNCTIONS,
+    function_call="auto"
+)
     msg = response.choices[0].message
 
-    if msg.get("function_call"):
-        fn_name = msg["function_call"]["name"]
-        fn_args = json.loads(msg["function_call"]["arguments"])
+    if getattr(msg, "function_call", None):
+        fn_name = msg.function_call.name
+        fn_args = json.loads(msg.function_call.arguments)
         handler = HANDLERS.get(fn_name, lambda _: {"error": "handler not implemented"})
         result = handler(fn_args)
         messages.append({"role": "function", "name": fn_name, "content": json.dumps(result)})
         return run_agent(None)  # continue, maybe model wants to answer
     else:
-        messages.append({"role": "assistant", "content": msg["content"]})
-        return msg["content"]
+        messages.append({"role": "assistant", "content": msg.content})
+        return msg.content
 
 @app.post("/chat")
 def chat_endpoint(req: ChatRequest):
